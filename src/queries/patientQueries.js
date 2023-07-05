@@ -2,13 +2,6 @@ const { PatientModel } = require("../mongoModels/patientModel");
 const { DoctorModel } = require("../mongoModels/doctorModel");
 const universalQueries = require("./ universalQueries");
 const { trimBooked } = require("./openQueries");
-const mongoose = require("mongoose");
-
-const parseTime = (time) => {
-  let date = new Date(time);
-  let userTimezoneOffset = date.getTimezoneOffset() * 60000;
-  return new Date(date.getTime() - userTimezoneOffset);
-};
 
 const getMe = async (req, res) => {
   try {
@@ -16,7 +9,7 @@ const getMe = async (req, res) => {
     if (!found) {
       return res.status(404).json({ msg: "User data not found!" });
     }
-    res.json(universalQueries.trimUselessProps(found));
+    res.json(universalQueries.trimUselessProps(found._doc));
   } catch (err) {
     console.log(err);
     res.status(500).json({
@@ -36,9 +29,7 @@ const login = async (req, res) => {
       return res.status(401).json({
         msg: "Incorrect email or password!",
       });
-    } else {
-      res.json(loggedIn);
-    }
+    } else res.json(loggedIn);
   } catch (err) {
     console.log(err);
     res.status(500).json({
@@ -85,7 +76,7 @@ const bookSlot = async (req, res) => {
       slot.time.getTime()
     );
 
-    var parsedTime = parseTime(req.body.time);
+    var parsedTime = req.body.time;
 
     if (availableTimes.includes(parsedTime.getTime())) {
       await DoctorModel.findOneAndUpdate(
@@ -110,11 +101,11 @@ const bookSlot = async (req, res) => {
       );
     } else {
       return res.status(404).json({
-        msg: "Slot that you try to book does not exist! Try another one.",
+        msg: "Slot for this time is not available!",
       });
     }
 
-    res.json({ msg: `Slot successfully booked! Time: ${req.body.time}.` });
+    res.json({ msg: `Slot for ${req.body.time} successfully booked!` });
   } catch (err) {
     console.log(err);
     res.status(500).json({
@@ -125,8 +116,8 @@ const bookSlot = async (req, res) => {
 
 const deleteMe = async (req, res) => {
   try {
-    await PatientModel.findByIdAndDelete(req.body.userId);
-    res.json({ msg: "User successfully deleted!" });
+    const deleted = await PatientModel.findByIdAndDelete(req.body.userId);
+    res.json({ msg: `Patient ${deleted._id} successfully deleted!` });
   } catch (err) {
     console.log(err);
     res.status(500).json({

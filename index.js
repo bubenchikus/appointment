@@ -6,6 +6,7 @@ const doctorQueries = require("./src/queries/doctorQueries.js");
 const openQueries = require("./src/queries/openQueries.js");
 const validations = require("./src/middlewares/valid.js");
 const auth = require("./src/middlewares/auth.js");
+require("./src/helpers/scheduler.js");
 
 dotenv.config();
 
@@ -18,7 +19,7 @@ const app = express();
 
 app.use(express.json());
 
-//open routes
+// открытые роуты
 app.get("/doctors", openQueries.getAllDoctors);
 app.get(
   "/doctors/:id",
@@ -33,7 +34,7 @@ app.get(
   openQueries.getDoctorsBySpecialty
 );
 
-// routes for patient user
+// роуты для пациентов
 app.get("/patient/me", auth.checkPatientAuth, patientQueries.getMe);
 app.post(
   "/patient/login",
@@ -63,7 +64,7 @@ app.delete(
   patientQueries.cancelSlot
 );
 
-//routes for doctor user
+// роуты для докторов
 app.get("/doctor/me", auth.checkDoctorAuth, doctorQueries.getMe);
 app.get(
   "/doctor/patients/:id",
@@ -92,15 +93,9 @@ app.post(
   doctorQueries.createSlot
 );
 app.delete("/doctor/me", auth.checkDoctorAuth, doctorQueries.deleteMe);
-app.delete(
-  "/doctor/slots/:id",
-  validations.queryId,
-  validations.catchErrors,
-  auth.checkDoctorAuth,
-  doctorQueries.deleteSlot
-);
+app.delete("/doctor/slots/:id", auth.checkDoctorAuth, doctorQueries.deleteSlot);
 
-app.listen(process.env.PORT, (err) => {
+const server = app.listen(process.env.PORT, (err) => {
   if (err) return console.log(err);
   console.log(`Server is OK and running on port ${process.env.PORT}...`);
 });

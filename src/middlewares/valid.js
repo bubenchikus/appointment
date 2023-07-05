@@ -11,6 +11,8 @@ const catchErrors = (req, res, next) => {
   next();
 };
 
+const idLength = config.get("userIdLength");
+
 const patientRegister = [
   body("name")
     .isString()
@@ -48,8 +50,6 @@ const login = [
 const slot = [
   body("time").isISO8601().withMessage("Invalid time format!").toDate(),
 ];
-
-const idLength = config.get("userIdLength");
 
 const patientSlot = [
   ...slot,

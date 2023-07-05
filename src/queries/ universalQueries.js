@@ -55,7 +55,7 @@ const login = async (Model, userData) => {
 
   return {
     ...trimUselessProps(user._doc),
-    token,
+    token: token,
   };
 };
 

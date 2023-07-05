@@ -9,8 +9,6 @@
 #### Для пациентов:
 
 - GET /patient/me
-- POST /patient/login
-- POST /patient/register
 - **POST /patient/slots**
 - DELETE /patient/me
 - DELETE /patient/slots/:id

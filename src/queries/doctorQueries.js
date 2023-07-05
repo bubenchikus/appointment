@@ -129,18 +129,25 @@ const createSlot = async (req, res) => {
 
 const deleteMe = async (req, res) => {
   try {
-    await DoctorModel.findByIdAndDelete(req.body.userId);
-    res.json({ msg: "User successfully deleted!" });
+    const deleted = await DoctorModel.findByIdAndDelete(req.body.userId);
+    res.json({ msg: `Doctor ${deleted._id} successfully deleted!` });
   } catch (err) {
     console.log(err);
     res.status(500).json({
-      msg: "User deletion failed!",
+      msg: "Doctor deletion failed!",
     });
   }
 };
 
 const deleteSlot = async (req, res) => {
   try {
+    const slotToDelete = await DoctorModel.findOne({
+      _id: req.body.userId,
+      "slots._id": req.params.id,
+    });
+    if (slotToDelete.toObject().hasOwnProperty("patientId")) {
+      return res.status(403).json({ msg: "You can't delete booked slot!" });
+    }
     await DoctorModel.findByIdAndUpdate(req.body.userId, {
       $pull: { slots: { _id: req.params.id } },
     });
