@@ -6,10 +6,10 @@ const removePasswordHashFromData = (user) => {
   return userData;
 };
 
-const signToken = (user, expires = "30d") => {
+const signToken = (userId, accountType, expires = "30d") => {
   return jwt.sign(
     {
-      userId: user._id,
+      userId: userId,
       accountType: accountType,
     },
     process.env.JWT_TOKEN_SECRET,
@@ -17,6 +17,17 @@ const signToken = (user, expires = "30d") => {
       expiresIn: expires,
     }
   );
+};
+
+const decodeToken = (authHeader) => {
+  return jwt.verify(
+    (authHeader || "").replace(/Bearer\s?/, ""),
+    process.env.JWT_TOKEN_SECRET
+  );
+};
+
+const getAccountType = (Model) => {
+  return Model.collection.collectionName === "doctor" ? "doctor" : "patient";
 };
 
 const createUser = async (Model, userData) => {
@@ -28,13 +39,13 @@ const createUser = async (Model, userData) => {
     passwordHash: passwordHash,
   }).save();
 
-  const token = signToken(user);
+  const token = signToken(user._id, getAccountType(Model));
 
-  return { ...removePasswordHashFromData(user), token: token };
+  return { ...removePasswordHashFromData(user._doc), token: token };
 };
 
 const login = async (Model, userData) => {
-  const user = await Model.findOne({ email: userData.email }).lean();
+  const user = await Model.findOne({ email: userData.email });
   if (!user) {
     return null;
   }
@@ -47,13 +58,22 @@ const login = async (Model, userData) => {
     return null;
   }
 
-  const token = signToken(user);
+  const token = signToken(user._id, getAccountType(Model));
 
   return {
-    ...removePasswordHashFromData(user),
+    ...removePasswordHashFromData(user._doc),
     token,
   };
 };
 
+const getMe = async (Model, authHeader) => {
+  const found = await Model.findById(decodeToken(authHeader).userId);
+  if (!found) {
+    return null;
+  }
+  res.json(found);
+};
+
 exports.createUser = createUser;
 exports.login = login;
+exports.getMe = getMe;

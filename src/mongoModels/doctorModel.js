@@ -5,7 +5,7 @@ const config = require("config");
 const DoctorSchema = new mongoose.Schema({
   name: { type: String, required: true },
   surname: { type: String, required: true },
-  phone: { type: String, required: true },
+  phone: { type: String, required: true, unique: true },
   email: {
     type: String,
     required: true,
@@ -15,7 +15,7 @@ const DoctorSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  spec: {
+  speciality: {
     type: String,
     enum: config.get("specialties"),
     required: true,
