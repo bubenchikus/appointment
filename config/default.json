@@ -20,5 +20,6 @@
     "anesthesiologist",
     "surgeon",
     "physician"
-  ]
+  ],
+  "userIdLength": 24
 }

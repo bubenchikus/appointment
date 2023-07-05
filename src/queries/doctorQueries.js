@@ -4,11 +4,11 @@ const universalQueries = require("./ universalQueries");
 
 const getMe = async (req, res) => {
   try {
-    const found = universalQueries.getMe(
-      DoctorModel,
-      req.headers.authorization
-    );
-    res.json(found);
+    const found = await DoctorModel.findById(req.body.userId);
+    if (!found) {
+      return res.status(404).json({ msg: "User data not found!" });
+    }
+    res.json(universalQueries.trimUselessProps(found._doc));
   } catch (err) {
     console.log(err);
     res.status(500).json({
@@ -17,7 +17,39 @@ const getMe = async (req, res) => {
   }
 };
 
-const getPatient = async (req, res) => {};
+const getPatient = async (req, res) => {
+  try {
+    const me = await DoctorModel.findById(req.body.userId);
+    if (!me) {
+      return res.status(404).json({ msg: "User data not found!" });
+    }
+
+    let patientIds = [];
+    me.slots.forEach((slot) => {
+      if (slot.toObject().hasOwnProperty("patientId")) {
+        patientIds.push(slot.patientId.toString());
+      }
+    });
+
+    if (!patientIds.includes(req.params.id)) {
+      return res.status(403).json({
+        msg: `Patient with id ${req.params.id} is not your patient!`,
+      });
+    }
+
+    const patient = await PatientModel.findById(req.params.id);
+    if (!patient) {
+      return res.status(404).json({ msg: "User data not found!" });
+    }
+
+    res.json(universalQueries.trimUselessProps(patient._doc));
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      msg: "Getting patient data failed!",
+    });
+  }
+};
 
 const login = async (req, res) => {
   try {
@@ -47,7 +79,7 @@ const register = async (req, res) => {
       email: req.body.email,
     });
     const foundByPhone = await DoctorModel.findOne({
-      email: req.body.phone,
+      phone: req.body.phone,
     });
     if (foundByEmail || foundByPhone) {
       return res.status(409).json({
@@ -73,22 +105,53 @@ const register = async (req, res) => {
   }
 };
 
-const createSlot = () => {
+const createSlot = async (req, res) => {
   try {
-    const timeBooked = DoctorModel.findOne({ slots: { time: req.body.time } });
-    if (timeBooked) {
+    const timeBooked = await DoctorModel.find({
+      "slots.time": req.body.time,
+    });
+    if (timeBooked.length > 0) {
       return res
         .status(409)
-        .json({ msg: "Slot with this time already exists!" });
+        .json({ msg: "Slot for this time already exists!" });
     }
-
-    const slot = DoctorModel.res.status(slot);
-  } catch (err) {}
+    const slot = await DoctorModel.findByIdAndUpdate(req.body.userId, {
+      $push: { slots: { time: req.body.time } },
+    });
+    res.json({ msg: `Slot for ${req.body.time} successfully created!` });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      msg: "Slot creation failed!",
+    });
+  }
 };
 
-const deleteMe = () => {};
+const deleteMe = async (req, res) => {
+  try {
+    await DoctorModel.findByIdAndDelete(req.body.userId);
+    res.json({ msg: "User successfully deleted!" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      msg: "User deletion failed!",
+    });
+  }
+};
 
-const deleteSlot = () => {};
+const deleteSlot = async (req, res) => {
+  try {
+    await DoctorModel.findByIdAndUpdate(req.body.userId, {
+      $pull: { slots: { _id: req.params.id } },
+    });
+    res.json({ msg: "Slot successfully deleted!" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      msg: "Slot deletion failed!",
+    });
+  }
+};
 
 exports.getMe = getMe;
 exports.getPatient = getPatient;

@@ -1,8 +1,8 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
-const removePasswordHashFromData = (user) => {
-  const { passwordHash, ...userData } = user;
+const trimUselessProps = (user) => {
+  const { passwordHash, __v, ...userData } = user;
   return userData;
 };
 
@@ -16,13 +16,6 @@ const signToken = (userId, accountType, expires = "30d") => {
     {
       expiresIn: expires,
     }
-  );
-};
-
-const decodeToken = (authHeader) => {
-  return jwt.verify(
-    (authHeader || "").replace(/Bearer\s?/, ""),
-    process.env.JWT_TOKEN_SECRET
   );
 };
 
@@ -41,7 +34,7 @@ const createUser = async (Model, userData) => {
 
   const token = signToken(user._id, getAccountType(Model));
 
-  return { ...removePasswordHashFromData(user._doc), token: token };
+  return { ...trimUselessProps(user._doc), token: token };
 };
 
 const login = async (Model, userData) => {
@@ -61,19 +54,11 @@ const login = async (Model, userData) => {
   const token = signToken(user._id, getAccountType(Model));
 
   return {
-    ...removePasswordHashFromData(user._doc),
+    ...trimUselessProps(user._doc),
     token,
   };
 };
 
-const getMe = async (Model, authHeader) => {
-  const found = await Model.findById(decodeToken(authHeader).userId);
-  if (!found) {
-    return null;
-  }
-  res.json(found);
-};
-
+exports.trimUselessProps = trimUselessProps;
 exports.createUser = createUser;
 exports.login = login;
-exports.getMe = getMe;

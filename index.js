@@ -20,8 +20,18 @@ app.use(express.json());
 
 //open routes
 app.get("/doctors", openQueries.getAllDoctors);
-app.get("/doctor/:id", openQueries.getDoctorById);
-app.get("/doctor/specialties/:specialty", openQueries.getDoctorsBySpecialty);
+app.get(
+  "/doctors/:id",
+  validations.queryId,
+  validations.catchErrors,
+  openQueries.getDoctorById
+);
+app.get(
+  "/doctors/specialties/:speciality",
+  validations.querySpecialty,
+  validations.catchErrors,
+  openQueries.getDoctorsBySpecialty
+);
 
 // routes for patient user
 app.get("/patient/me", auth.checkPatientAuth, patientQueries.getMe);
@@ -47,13 +57,21 @@ app.post(
 app.delete("/patient/me", auth.checkPatientAuth, patientQueries.deleteMe);
 app.delete(
   "/patient/slots/:id",
+  validations.queryId,
+  validations.catchErrors,
   auth.checkPatientAuth,
   patientQueries.cancelSlot
 );
 
 //routes for doctor user
 app.get("/doctor/me", auth.checkDoctorAuth, doctorQueries.getMe);
-app.get("/doctor/patients/:id", auth.checkDoctorAuth, doctorQueries.getPatient);
+app.get(
+  "/doctor/patients/:id",
+  validations.queryId,
+  validations.catchErrors,
+  auth.checkDoctorAuth,
+  doctorQueries.getPatient
+);
 app.post(
   "/doctor/login",
   validations.login,
@@ -74,7 +92,13 @@ app.post(
   doctorQueries.createSlot
 );
 app.delete("/doctor/me", auth.checkDoctorAuth, doctorQueries.deleteMe);
-app.delete("/doctor/slots/:id", auth.checkDoctorAuth, doctorQueries.deleteSlot);
+app.delete(
+  "/doctor/slots/:id",
+  validations.queryId,
+  validations.catchErrors,
+  auth.checkDoctorAuth,
+  doctorQueries.deleteSlot
+);
 
 app.listen(process.env.PORT, (err) => {
   if (err) return console.log(err);

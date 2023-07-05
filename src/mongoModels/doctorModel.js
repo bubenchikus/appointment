@@ -22,7 +22,7 @@ const DoctorSchema = new mongoose.Schema({
   },
   slots: [
     {
-      time: { type: Date, unique: true, required: true },
+      time: { type: Date, required: true },
       // patientId есть <=> слот забронирован (поле isBooked необязательно)
       patientId: {
         type: mongoose.Schema.Types.ObjectId,
