@@ -67,20 +67,9 @@ const doctorSlot = [
     .isLength({ min: idLength, max: idLength }),
 ];
 
-const querySpecialty = [
-  query("specialty")
-    .isIn(config.get("specialties"))
-    .withMessage("Invalid doctor's speciality!"),
-];
-const queryId = [
-  query("id", "Invalid id format!").isLength({ min: idLength, max: idLength }),
-];
-
 exports.catchErrors = catchErrors;
 exports.patientRegister = patientRegister;
 exports.doctorRegister = doctorRegister;
 exports.login = login;
 exports.patientSlot = patientSlot;
 exports.doctorSlot = doctorSlot;
-exports.querySpecialty = querySpecialty;
-exports.queryId = queryId;

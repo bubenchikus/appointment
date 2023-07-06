@@ -2,6 +2,11 @@ const { PatientModel } = require("../mongoModels/patientModel");
 const { DoctorModel } = require("../mongoModels/doctorModel");
 const universalQueries = require("./ universalQueries");
 const { trimBooked } = require("./openQueries");
+const {
+  scheduleNotifications,
+  makeUniqueNameForJob,
+  schedule,
+} = require("../helpers/scheduler");
 
 const getMe = async (req, res) => {
   try {
@@ -86,7 +91,8 @@ const bookSlot = async (req, res) => {
         },
         { $set: { "slots.$.patientId": req.body.userId } }
       );
-      await PatientModel.findOneAndUpdate(
+
+      const patient = await PatientModel.findOneAndUpdate(
         {
           _id: req.body.userId,
         },
@@ -98,6 +104,13 @@ const bookSlot = async (req, res) => {
             },
           },
         }
+      );
+
+      // планировщик уведомдений
+      scheduleNotifications(
+        parsedTime,
+        patient._doc.name,
+        doctor._doc.speciality
       );
     } else {
       return res.status(404).json({
@@ -138,11 +151,11 @@ const cancelSlot = async (req, res) => {
         .json({ msg: "Appointments with this id are not found!" });
     }
 
-    await PatientModel.findByIdAndUpdate(req.body.userId, {
+    const patient = await PatientModel.findByIdAndUpdate(req.body.userId, {
       $pull: { appointments: { _id: req.params.id } },
     });
 
-    await DoctorModel.findOneAndUpdate(
+    const doctor = await DoctorModel.findOneAndUpdate(
       {
         _id: toDelete.doctorId,
         "slots.time": toDelete.time,
@@ -150,7 +163,17 @@ const cancelSlot = async (req, res) => {
       { $unset: { "slots.$.patientId": 1 } }
     );
 
-    res.json({ msg: "Appointment successfully cancelled!" });
+    const uniqueName = makeUniqueNameForJob(
+      toDelete.time,
+      patient._doc.name,
+      doctor._doc.speciality
+    );
+    // отмена уведомлений
+    schedule.scheduledJobs[uniqueName].cancel();
+
+    res.json({
+      msg: `Appointment for ${patient._doc.name} on ${toDelete.time} successfully cancelled!`,
+    });
   } catch (err) {
     console.log(err);
     res.status(500).json({

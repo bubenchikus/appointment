@@ -1,4 +1,5 @@
 const axios = require("axios");
+const fs = require("fs");
 const dotenv = require("dotenv");
 dotenv.config();
 
@@ -70,13 +71,24 @@ const bookSlot = async (time, doctorId, token) => {
   return res;
 };
 
+const cancelSlot = async (token, slotId) => {
+  const res = await axios
+    .delete(makeURL(`patient/slots/${slotId}`), makeAuthHeader(token))
+    .then((res) => {
+      console.log(res.data.msg);
+    })
+    .catch((err) => {
+      console.log(err.response.data.msg);
+    });
+};
+
 const deleteUser = async (user, token) => {
   await axios
     .delete(makeURL(`${user}/me`), makeAuthHeader(token))
     .then((res) => {
       console.log(res.data.msg);
     })
-    .catch((err) => console.log(err.response));
+    .catch((err) => console.log(err.response.data.msg));
 };
 
 const curr = new Date();
@@ -137,18 +149,34 @@ const main = async () => {
     await postSlot(dates[2], this.doctorData.token);
     await bookSlot(dates[2], this.doctorData._id, this.patient1Data.token);
 
-    infoMsg("Fetching first patient's data...");
-    console.log(await getUser("patient", this.patient1Data.token));
+    infoMsg("Then the first patient cancelles it...");
+    await cancelSlot(
+      this.patient1Data.token,
+      String(
+        (
+          await getUser("patient", this.patient1Data.token)
+        ).appointments.find(
+          (a) => new Date(a.time).getTime() === dates[2].getTime()
+        )._id
+      )
+    );
+
+    infoMsg("And the second patient books freed appointment...");
+    await bookSlot(dates[2], this.doctorData._id, this.patient2Data.token);
 
     infoMsg("Fetching doctor's data...");
     console.log(await getUser("doctor", this.doctorData.token));
+    infoMsg("Fetching first patient's data...");
+    console.log(await getUser("patient", this.patient1Data.token));
+    infoMsg("Fetching second patient's data...");
+    console.log(await getUser("patient", this.patient2Data.token));
   } catch (err) {
     console.log(err);
   }
   infoMsg("Cleaning up...");
-  deleteUser("patient", this.patient1Data.token);
-  deleteUser("patient", this.patient2Data.token);
-  deleteUser("doctor", this.doctorData.token);
+  await deleteUser("patient", this.patient1Data.token);
+  await deleteUser("patient", this.patient2Data.token);
+  await deleteUser("doctor", this.doctorData.token);
 };
 
 main();

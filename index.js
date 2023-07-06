@@ -6,7 +6,6 @@ const doctorQueries = require("./src/queries/doctorQueries.js");
 const openQueries = require("./src/queries/openQueries.js");
 const validations = require("./src/middlewares/valid.js");
 const auth = require("./src/middlewares/auth.js");
-require("./src/helpers/scheduler.js");
 
 dotenv.config();
 
@@ -21,18 +20,8 @@ app.use(express.json());
 
 // открытые роуты
 app.get("/doctors", openQueries.getAllDoctors);
-app.get(
-  "/doctors/:id",
-  validations.queryId,
-  validations.catchErrors,
-  openQueries.getDoctorById
-);
-app.get(
-  "/doctors/specialties/:speciality",
-  validations.querySpecialty,
-  validations.catchErrors,
-  openQueries.getDoctorsBySpecialty
-);
+app.get("/doctors/:id", openQueries.getDoctorById);
+app.get("/doctors/specialties/:speciality", openQueries.getDoctorsBySpecialty);
 
 // роуты для пациентов
 app.get("/patient/me", auth.checkPatientAuth, patientQueries.getMe);
@@ -58,21 +47,13 @@ app.post(
 app.delete("/patient/me", auth.checkPatientAuth, patientQueries.deleteMe);
 app.delete(
   "/patient/slots/:id",
-  validations.queryId,
-  validations.catchErrors,
   auth.checkPatientAuth,
   patientQueries.cancelSlot
 );
 
 // роуты для докторов
 app.get("/doctor/me", auth.checkDoctorAuth, doctorQueries.getMe);
-app.get(
-  "/doctor/patients/:id",
-  validations.queryId,
-  validations.catchErrors,
-  auth.checkDoctorAuth,
-  doctorQueries.getPatient
-);
+app.get("/doctor/patients/:id", auth.checkDoctorAuth, doctorQueries.getPatient);
 app.post(
   "/doctor/login",
   validations.login,
