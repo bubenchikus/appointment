@@ -4,7 +4,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const makeURL = (path) => {
-  return new URL(path, `http://localhost:${process.env.PORT}`).href;
+  return new URL(path, `http://127.0.0.1:${process.env.PORT}`).href;
 };
 
 const makeAuthHeader = (token) => {
@@ -15,10 +15,14 @@ const infoMsg = (msg) => {
   console.log(`======> ${msg}`);
 };
 
+const makeError = (err) => {
+  console.log(err.response?.data?.msg || err.response?.msg || "Error!...");
+};
+
 const registerPatient = async (data) => {
   const token = await axios
     .post(makeURL("patient/register"), data)
-    .catch((err) => console.log(err.response.data.msg));
+    .catch((err) => makeError(err));
   return token;
 };
 
@@ -33,7 +37,7 @@ const registerDoctor = async () => {
       repeatPassword: "7882ijw!!@edso",
       speciality: "pediatrician",
     })
-    .catch((err) => console.log(err.response.data.msg));
+    .catch((err) => makeError(err));
   return token;
 };
 
@@ -41,7 +45,7 @@ const getUser = async (user, token) => {
   const res = await axios
     .get(makeURL(`${user}/me`), makeAuthHeader(token))
     .then((res) => res.data)
-    .catch((err) => console.log(err.response.data.msg));
+    .catch((err) => makeError(err));
   return res;
 };
 
@@ -51,7 +55,7 @@ const postSlot = async (time, token) => {
     .then((res) => {
       console.log(res.data.msg);
     })
-    .catch((err) => console.log(err.response.data.msg));
+    .catch((err) => makeError(err));
   return res;
 };
 
@@ -65,9 +69,7 @@ const bookSlot = async (time, doctorId, token) => {
     .then((res) => {
       console.log(res.data.msg);
     })
-    .catch((err) => {
-      console.log(err.response.data.msg);
-    });
+    .catch((err) => makeError(err));
   return res;
 };
 
@@ -77,9 +79,7 @@ const cancelSlot = async (token, slotId) => {
     .then((res) => {
       console.log(res.data.msg);
     })
-    .catch((err) => {
-      console.log(err.response.data.msg);
-    });
+    .catch((err) => makeError(err));
 };
 
 const deleteUser = async (user, token) => {
@@ -88,7 +88,7 @@ const deleteUser = async (user, token) => {
     .then((res) => {
       console.log(res.data.msg);
     })
-    .catch((err) => console.log(err.response.data.msg));
+    .catch((err) => makeError(err));
 };
 
 const curr = new Date();
@@ -96,7 +96,7 @@ const curr2Hours = new Date(curr.getTime() + 2 * 60 * 60 * 1000 + 1000);
 const currDay = new Date(curr.getTime() + 24 * 60 * 60 * 1000 + 1000);
 const dates = [curr, curr2Hours, currDay];
 
-const main = async () => {
+const scenario = async () => {
   try {
     infoMsg("BOOKING SCENARIO:");
     infoMsg("Registering the patient...");
@@ -170,13 +170,15 @@ const main = async () => {
     console.log(await getUser("patient", this.patient1Data.token));
     infoMsg("Fetching second patient's data...");
     console.log(await getUser("patient", this.patient2Data.token));
+
+    infoMsg("Cleaning up...");
+    await deleteUser("patient", this.patient1Data.token);
+    await deleteUser("patient", this.patient2Data.token);
+    await deleteUser("doctor", this.doctorData.token);
   } catch (err) {
+    console.log("Scenario failed!");
     console.log(err);
   }
-  infoMsg("Cleaning up...");
-  await deleteUser("patient", this.patient1Data.token);
-  await deleteUser("patient", this.patient2Data.token);
-  await deleteUser("doctor", this.doctorData.token);
 };
 
-main();
+exports.scenario = scenario;

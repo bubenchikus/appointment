@@ -6,13 +6,9 @@ const doctorQueries = require("./src/queries/doctorQueries.js");
 const openQueries = require("./src/queries/openQueries.js");
 const validations = require("./src/middlewares/valid.js");
 const auth = require("./src/middlewares/auth.js");
+const { scenario } = require("./bookingScenario.js");
 
 dotenv.config();
-
-mongoose
-  .connect(process.env.MONGODB_APPOINTMENT)
-  .then(() => console.log("Succesfully connected to DB..."))
-  .catch((err) => console.log("Connection to DB failed!", err));
 
 const app = express();
 
@@ -76,7 +72,14 @@ app.post(
 app.delete("/doctor/me", auth.checkDoctorAuth, doctorQueries.deleteMe);
 app.delete("/doctor/slots/:id", auth.checkDoctorAuth, doctorQueries.deleteSlot);
 
-const server = app.listen(process.env.PORT, (err) => {
-  if (err) return console.log(err);
-  console.log(`Server is OK and running on port ${process.env.PORT}...`);
-});
+mongoose
+  .connect(process.env.MONGODB_APPOINTMENT)
+  .then(() => {
+    console.log("Succesfully connected to DB...");
+    app.listen(process.env.PORT, async (err) => {
+      if (err) return console.log(err);
+      console.log(`Server is OK and running on port ${process.env.PORT}...`);
+      scenario();
+    });
+  })
+  .catch((err) => console.log("Connection to DB failed!\n", err));
