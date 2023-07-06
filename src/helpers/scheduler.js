@@ -19,7 +19,6 @@ const writeToLog = (msg) => {
   fs.appendFile(
     path.resolve(process.env.NOTIFICATION_LOG),
     msg + "\n",
-    { flag: "w" },
     (err) => {
       if (err) {
         console.log(err);
