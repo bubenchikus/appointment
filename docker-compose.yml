@@ -11,6 +11,7 @@ services:
     restart: always
     build:
       dockerfile: Dockerfile
+      context: .
     links:
       - mongodb
     ports:
