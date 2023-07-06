@@ -161,7 +161,7 @@ const scenario = async () => {
       )
     );
 
-    infoMsg("And the second patient books freed appointment...");
+    infoMsg("And the second patient books freed slot...");
     await bookSlot(dates[2], this.doctorData._id, this.patient2Data.token);
 
     infoMsg("Fetching doctor's data...");
@@ -170,15 +170,14 @@ const scenario = async () => {
     console.log(await getUser("patient", this.patient1Data.token));
     infoMsg("Fetching second patient's data...");
     console.log(await getUser("patient", this.patient2Data.token));
-
-    infoMsg("Cleaning up...");
-    await deleteUser("patient", this.patient1Data.token);
-    await deleteUser("patient", this.patient2Data.token);
-    await deleteUser("doctor", this.doctorData.token);
   } catch (err) {
     console.log("Scenario failed!");
     console.log(err);
   }
+  infoMsg("Cleaning up...");
+  await deleteUser("patient", this.patient1Data.token);
+  await deleteUser("patient", this.patient2Data.token);
+  await deleteUser("doctor", this.doctorData.token);
 };
 
 exports.scenario = scenario;

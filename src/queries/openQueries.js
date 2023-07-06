@@ -1,4 +1,5 @@
 const { DoctorModel } = require("../mongoModels/doctorModel");
+const { trimUselessProps } = require("./ universalQueries");
 
 // не показываем уже забронированные слоты
 const trimBooked = (doctor) => {
@@ -13,7 +14,9 @@ const getAllDoctors = async (_, res) => {
     // не найдено => вернется пустой объект (допустимо)
     const found = await DoctorModel.find();
 
-    const processedFound = found.map((doctor) => trimBooked(doctor));
+    const processedFound = found.map((doctor) =>
+      trimUselessProps(trimBooked(doctor._doc))
+    );
 
     res.json(processedFound);
   } catch (err) {
@@ -32,7 +35,7 @@ const getDoctorById = async (req, res) => {
       return res.status(404).json({ msg: "Doctor with this id not found!" });
     }
 
-    res.json(trimBooked(found));
+    res.json(trimUselessProps(trimBooked(found._doc)));
   } catch (err) {
     console.log(err);
     res.status(500).json({
@@ -45,7 +48,9 @@ const getDoctorsBySpecialty = async (req, res) => {
   try {
     const found = await DoctorModel.find({ speciality: req.params.speciality });
 
-    const processedFound = found.map((doctor) => trimBooked(doctor));
+    const processedFound = found.map((doctor) =>
+      trimUselessProps(trimBooked(doctor._doc))
+    );
 
     res.json(processedFound);
   } catch (err) {
