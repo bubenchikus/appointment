@@ -8,6 +8,7 @@ services:
     volumes:
       - mongodb:/data/db
   node:
+    container_name: backend
     restart: always
     build:
       dockerfile: Dockerfile
